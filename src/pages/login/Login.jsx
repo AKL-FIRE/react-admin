@@ -2,12 +2,17 @@ import React, {Component} from 'react';
 import {
   Form,
   Input,
-  Button} from 'antd'
+  Button,
+  message
+} from 'antd'
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
-
+import {reqLogin} from "../../api";
+import memoryUtils from "../../utils/memoryUtils";
+import storageUtils from "../../utils/storageUtils";
+import {Redirect} from "react-router-dom";
 
 import './login.less'
-import logo from './images/logo.png'
+import logo from '../../assets/images/logo.png'
 
 /*
 * 登录的路由组件
@@ -15,8 +20,34 @@ import logo from './images/logo.png'
 
 export default class Login extends Component {
 
-  handleSubmit = (values) => {
-    console.log(values)
+  /*
+  * async和await
+  * 简化Promise对象的使用：不用再使用then()来指定成功/失败的回调函数
+  * 2. 哪里写await
+  *   在返回promise的表达式左侧写await： 不想要promise，想要promise异步执行成功的value数据
+  * 3. 哪里写async
+  *   await所在的函数（最近的）定义的左侧
+  * */
+  handleSubmit = async (values) => {
+    // console.log(values);
+    // 请求登录
+    const {username, password} = values
+    const result = await reqLogin(username, password) // {status: 0, data: user} {status: 1, msg: 'xxx}
+    if (result.status === 0) {
+      // 登录成功
+      message.success('登录成功')
+
+      // 保存user
+      const user = result.data
+      memoryUtils.user = user // 存在内存中
+      storageUtils.saveUser(user) // 本地存储
+
+      // 跳转到管理页面(不需要回退)
+      this.props.history.replace('/')
+    } else {
+      // 登录失败
+      message.error(result.msg)
+    }
   }
 
   // 对密码进行验证(自定义方式)
@@ -35,6 +66,13 @@ export default class Login extends Component {
   }
 
   render() {
+
+    // 如果用户已经登录，直接跳转到管理页面
+    const user = memoryUtils.user
+    if (user && user._id) {
+      return <Redirect to='/'/>
+    }
+
     return (
       <div className="login">
         <header className="login-header">
