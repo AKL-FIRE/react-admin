@@ -13,7 +13,7 @@ export default class UpdateForm extends Component {
   formRef = React.createRef()
 
   static propTypes = {
-    categoryName: PropTypes.string.isRequired,
+    categoryName: PropTypes.string,
     setForm: PropTypes.func.isRequired
   }
 
@@ -37,7 +37,7 @@ export default class UpdateForm extends Component {
         rules={[
           {
             required: true,
-            message: '请输入类别名称'
+            message: '分类名称必须输入'
           }
         ]}
       >
