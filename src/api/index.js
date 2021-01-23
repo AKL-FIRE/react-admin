@@ -38,6 +38,8 @@ export const reqSearchProducts = ({pageNum, pageSize, searchName, searchType}) =
 })
 // 更新商品的状态（上架或者下架）
 export const reqUpdateStatus = (productId, status) => ajax(BASE + '/manage/product/updateStatus', {productId, status}, 'POST')
+// 删除图片
+export const reqDeleteImg = (name) => ajax(BASE + '/manage/img/delete', {name}, 'POST')
 /*
 * 天气接口
 * */
