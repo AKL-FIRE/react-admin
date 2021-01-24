@@ -5,11 +5,12 @@ import {
   Input,
   Cascader,
   Upload,
-  Button
+  Button, message
 } from 'antd';
 import LinkButton from "../../components/link-button";
 import PicturesWall from "./PicturesWall";
-import {reqCategory} from "../../api";
+import {reqCategory, reqAddOrUpdateProduct} from "../../api";
+import RichTextEditor from "./RichTextEditor";
 
 import {ArrowLeftOutlined} from '@ant-design/icons'
 const {Item} = Form
@@ -25,6 +26,7 @@ export default class ProductAddUpdate extends Component {
   }
 
   pw = React.createRef()
+  editor = React.createRef()
 
   initOptions = async (categories) => {
     // 根据categories生成options数组
@@ -108,10 +110,34 @@ export default class ProductAddUpdate extends Component {
     this.setState({optionLists: this.state.optionLists})
   }
 
-  submit = (values) => {
-    // console.log(values)
+  submit = async (values) => {
+    // 1.收集数据，并封装成product对象
+    const {name, desc, price, category} = values
+    let pCategoryId, categoryId
+    if (category.length === 1) {
+      pCategoryId = '0'
+      categoryId = category[0]
+    } else {
+      pCategoryId = category[0]
+      categoryId = category[1]
+    }
     const imgs = this.pw.current.getImgs()
-    console.log(imgs)
+    const detail = this.editor.current.getDetail()
+
+    const product = {name, desc, price, imgs, detail, pCategoryId, categoryId}
+    // 如果是更新，需要添加_id
+    if (this.isUpdate) {
+      product._id = this.product._id
+    }
+
+    // 2.调用接口请求函数
+    const result = await reqAddOrUpdateProduct(product)
+    if (result.status === 0) {
+      message.success(`${this.isUpdate ? '更新' : '添加'}商品成功`)
+      this.props.history.goBack()
+    } else {
+      message.error(`${this.isUpdate ? '更新' : '添加'}商品失败`)
+    }
   }
 
   componentDidMount() {
@@ -143,7 +169,7 @@ export default class ProductAddUpdate extends Component {
     this.product = product || {}
     // 用来接受级联分类ID的数组
     const categoryIds = []
-    const {pCategoryId, categoryId, imgs} = this.product
+    const {pCategoryId, categoryId, imgs, detail} = this.product
     if (this.isUpdate) {
       if (pCategoryId === '0') {
         // 商品是一个一级分类商品
@@ -219,14 +245,17 @@ export default class ProductAddUpdate extends Component {
           <Item label="商品图片">
             <PicturesWall ref={this.pw} imgs={imgs}/>
           </Item>
-          <Item label="商品详情">
-            <Input/>
+          <Item
+            label="商品详情"
+            labelCol={{span: 3}}
+            wrapperCol={{span: 14}}
+          >
+            <RichTextEditor ref={this.editor} detail={detail}/>
           </Item>
           <Item>
             <Button
               type="primary"
               htmlType="submit"
-              onClick={this.submit}
             >提交</Button>
           </Item>
         </Form>
